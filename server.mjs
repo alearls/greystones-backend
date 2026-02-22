@@ -15,6 +15,65 @@ app.get("/weather", async (req, res) => {
   }
 });
 
+// Helper: pick a simple icon based on conditions
+function pickIcon({ temp, wind, rain }) {
+  if (rain >= 3) return "heavy-rain";
+  if (rain > 0) return "rain";
+  if (wind >= 40) return "windy";
+  if (temp < 3) return "cold";
+  if (temp > 20) return "warm";
+  return "cloudy-sun";
+}
+
+// Helper: school run impact
+function schoolRunImpact({ temp, wind, rain }) {
+  // Simple scoring
+  let level = "Easy";
+  let reasons = [];
+
+  if (rain > 0 && rain < 1) {
+    level = "Moderate";
+    reasons.push("Light rain");
+  }
+  if (rain >= 1) {
+    level = "Challenging";
+    reasons.push("Rainy conditions");
+  }
+  if (wind >= 40) {
+    level = "Challenging";
+    reasons.push("Strong winds");
+  }
+  if (temp < 3) {
+    level = "Challenging";
+    reasons.push("Very cold");
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("Dry and calm, good for school run");
+  }
+
+  return {
+    level, // Easy / Moderate / Challenging
+    reasons,
+  };
+}
+
+// Helper: suggestion / guidance
+function suggestion({ temp, wind, rain }) {
+  const tips = [];
+
+  if (rain > 0) tips.push("Bring a rain jacket or umbrella");
+  if (temp < 5) tips.push("Wear a warm coat and hat");
+  if (wind >= 40) tips.push("Secure loose items and expect a blustery walk");
+  if (rain === 0 && temp >= 5 && wind < 30) tips.push("Nice conditions for a walk");
+
+  if (tips.length === 0) {
+    return "Conditions are fine, no special preparation needed.";
+  }
+
+  return tips.join(". ") + ".";
+}
+
 // STATUS (MAIN ENDPOINT FOR APP)
 app.get("/status", async (req, res) => {
   try {
@@ -50,7 +109,12 @@ app.get("/status", async (req, res) => {
     if (temp < 5 || wind > 40 || rain > 1) comfort = "Uncomfortable";
     if (temp < 0 || wind > 60 || rain > 3) comfort = "Severe";
 
-    // 4. AI-style summary
+    // 4. Icon + school run + suggestion
+    const icon = pickIcon({ temp, wind, rain });
+    const schoolRun = schoolRunImpact({ temp, wind, rain });
+    const advice = suggestion({ temp, wind, rain });
+
+    // 5. AI-style summary
     let summary = `Greystones right now: ${temp}°C, wind ${wind} km/h, rain ${rain}mm.`;
 
     if (alerts.length === 0) {
@@ -60,13 +124,17 @@ app.get("/status", async (req, res) => {
     }
 
     summary += ` Overall comfort: ${comfort}.`;
+    summary += ` School run: ${schoolRun.level} (${schoolRun.reasons.join(", ")}).`;
 
-    // 5. Send to app
+    // 6. Send to app
     res.json({
       weather,
       alerts,
       comfort,
-      summary,
+      icon,          // for UI icons
+      schoolRun,     // { level, reasons }
+      advice,        // text suggestion
+      summary,       // main AI-style text
       timestamp: new Date().toISOString(),
     });
 
