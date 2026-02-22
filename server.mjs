@@ -1,10 +1,9 @@
 import express from "express";
-import { parseStringPromise } from "xml2js";
 
 const app = express();
 const PORT = 3000;
 
-// WEATHER
+// WEATHER (raw endpoint)
 app.get("/weather", async (req, res) => {
   try {
     const r = await fetch(
@@ -13,25 +12,6 @@ app.get("/weather", async (req, res) => {
     res.json(await r.json());
   } catch {
     res.status(500).json({ error: "weather failed" });
-  }
-});
-
-// TRAFFIC (REAL DATEX II)
-app.get("/traffic", async (req, res) => {
-  try {
-    const r = await fetch("https://traffic.api.tii.ie/v1/traveltimes");
-    const data = await r.json();
-    const entry = data[0];
-
-    res.json({
-      route: entry?.RouteName || "Unknown",
-      current_travel_time: entry?.TravelTimeMinutes || null,
-      free_flow_time: entry?.FreeFlowTravelTimeMinutes || null,
-      delay: entry?.DelayMinutes || null,
-      updated: entry?.LastUpdated || null,
-    });
-  } catch (err) {
-    res.status(500).json({ error: "traffic failed" });
   }
 });
 
