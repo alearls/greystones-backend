@@ -2,7 +2,7 @@
   "name": "greystones-backend",
   "version": "1.0.0",
   "type": "module",
-  "main": "server.js",
+  "main": "server.mjs",
   "dependencies": {
     "express": "^4.22.1",
     "node-fetch": "^2.7.0",
