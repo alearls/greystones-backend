@@ -28,22 +28,44 @@ app.get("/status", async (req, res) => {
     const wind = weather.current_weather.windspeed;
     const rain = weather.hourly.precipitation[0];
 
-    // 2. Generate simple alert rules
+    // 2. Generate smarter alert rules
     const alerts = [];
-    if (rain > 0) alerts.push(`Rain detected: ${rain}mm`);
-    if (wind > 40) alerts.push(`High winds: ${wind} km/h`);
-    if (temp < 3) alerts.push(`Freezing temperatures: ${temp}°C`);
 
-    // 3. AI-style summary
-    let summary = `Current conditions in Greystones: ${temp}°C, wind ${wind} km/h, rain ${rain}mm.`;
-    if (alerts.length > 0) {
-      summary += ` Alerts: ${alerts.join(", ")}.`;
+    // Rain alerts
+    if (rain > 0 && rain < 1) alerts.push("Light rain expected");
+    if (rain >= 1 && rain < 3) alerts.push("Moderate rain");
+    if (rain >= 3) alerts.push("Heavy rain");
+
+    // Wind alerts
+    if (wind >= 20 && wind < 40) alerts.push("Breezy conditions");
+    if (wind >= 40 && wind < 60) alerts.push("Strong winds");
+    if (wind >= 60) alerts.push("Gale-force winds");
+
+    // Temperature alerts
+    if (temp < 5 && temp >= 0) alerts.push("Cold temperatures");
+    if (temp < 0) alerts.push("Freezing conditions");
+
+    // 3. Comfort rating
+    let comfort = "Comfortable";
+    if (temp < 5 || wind > 40 || rain > 1) comfort = "Uncomfortable";
+    if (temp < 0 || wind > 60 || rain > 3) comfort = "Severe";
+
+    // 4. AI-style summary
+    let summary = `Greystones right now: ${temp}°C, wind ${wind} km/h, rain ${rain}mm.`;
+
+    if (alerts.length === 0) {
+      summary += " Conditions are calm with no alerts.";
+    } else {
+      summary += " Alerts: " + alerts.join(", ") + ".";
     }
 
-    // 4. Send to app
+    summary += ` Overall comfort: ${comfort}.`;
+
+    // 5. Send to app
     res.json({
       weather,
       alerts,
+      comfort,
       summary,
       timestamp: new Date().toISOString(),
     });
@@ -53,6 +75,4 @@ app.get("/status", async (req, res) => {
   }
 });
 
-app.listen(PORT, () =>
-  console.log(`Server running on http://localhost:${PORT}`)
-);
+app.listen(PORT
