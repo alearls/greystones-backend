@@ -69,10 +69,13 @@ app.get("/status", async (req, res) => {
       summary,
       timestamp: new Date().toISOString(),
     });
+
   } catch (err) {
     console.log("Status error:", err);
     res.status(500).json({ error: "status failed" });
   }
 });
 
-app.listen(PORT
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
